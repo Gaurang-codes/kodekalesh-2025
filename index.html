@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ContentFlow Intelligence Studio</title>
+
+  <!-- Prevent FOUC: apply dark class early based on saved preference or system -->
+  <script>
+    (function() {
+      const pref = localStorage.getItem('theme');
+      if (pref === 'dark' || (!pref && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    })();
+  </script>
+
+  <!-- Tailwind (kept as you had it) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SDKs (kept but app tolerates missing/blocked SDKs) -->
+  <script src="/_sdk/data_sdk.js" defer></script>
+  <script src="/_sdk/element_sdk.js" defer></script>
+
+  <style>
+    :root { box-sizing: border-box; }
+    *,*::before,*::after{box-sizing:inherit}
+    body{margin:0}
+    .workflow-step{transition:all .3s ease}
+    .workflow-step:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.1)}
+    .pulse-animation{animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+    .slide-in{animation:slideIn .5s ease-out}
+    @keyframes slideIn{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .fade-in{animation:fadeIn .6s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .theme-transition{transition:background-color .3s ease,color .3s ease,border-color .3s ease}
+    /* Minimal fallback */
+    .fallback-container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+    /* textarea background color (very light purple) */
+    .textarea-light-purple { background-color: #F3E8FF; }
+
+    /* placeholder color (dark blue) */
+    .placeholder-dark-blue::placeholder { color: #0B3D91; }
+
+    /* kept for backward-compat but not used by default */
+    .placeholder-light-purple::placeholder { color: #E9D5FF; }
+  </style>
+
+  <style>@view-transition { navigation: auto; }</style>
+</head>
+<body class="min-h-full bg-gray-50" data-theme="light">
+  <div id="app" class="min-h-full">
+    <!-- NAV (removed sign-in UI per request) -->
+    <nav class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 theme-transition" role="navigation" aria-label="Main Navigation">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <h1 id="app-title" class="text-xl font-bold text-purple-600 dark:text-purple-400">ContentFlow Intelligence Studio</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main id="main-content" role="main" class="theme-transition">
+      <!-- Landing page (visuals preserved) -->
+      <section id="landing-page" class="relative bg-white dark:bg-gray-900 theme-transition">
+        <div class="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 dark:from-purple-800 dark:via-blue-800 dark:to-indigo-900">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+              <div class="text-white">
+                <h1 id="hero-tagline" class="text-4xl md:text-5xl font-bold mb-4">AI-powered content workflow automation</h1>
+                <p class="text-lg text-purple-100 mb-6">Transform your content creation with intelligent workflow steps, multi-format generation, audience insights, and brand memory—built for teams and creators.</p>
+
+                <div class="flex flex-wrap gap-4">
+                  <button id="create-workflow-hero" class="bg-white text-purple-600 px-6 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">Unleash Content</button>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-3 text-sm text-purple-100">
+                  <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-white rounded-full mt-2/4"></div>
+                    <div><strong>Smart workflows</strong><div class="text-xs">Auto-generated 6–8 step strategies</div></div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-white rounded-full mt-2/4"></div>
+                    <div><strong>Multi-format outputs</strong><div class="text-xs">Blogs, posts, scripts & visuals</div></div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-white rounded-full mt-2/4"></div>
+                    <div><strong>Audience intelligence</strong><div class="text-xs">Tone + language adaptation</div></div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-white rounded-full mt-2/4"></div>
+                    <div><strong>Brand memory</strong><div class="text-xs">Consistent voice across assets</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-6 bg-white/10 rounded-xl shadow-lg">
+                <div class="bg-white rounded-lg p-6 dark:bg-gray-800">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Quick feature tour</h3>
+                  <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                    <li class="flex items-start gap-3">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-purple-50 dark:bg-purple-900 text-purple-600 dark:text-purple-300 font-semibold">1</span>
+                      <div><strong>Smart Workflow Builder</strong><div class="text-xs">AI creates a goal-oriented step plan.</div></div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-300 font-semibold">2</span>
+                      <div><strong>Multi-Format Generator</strong><div class="text-xs">One goal → blog + social + script + visuals.</div></div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-semibold">3</span>
+                      <div><strong>Audience Insights</strong><div class="text-xs">Demographics, tone, emotions for better targeting.</div></div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 font-semibold">4</span>
+                      <div><strong>Export & Collaboration</strong><div class="text-xs">Download text/images or export workflow JSON.</div></div>
+                    </li>
+                  </ul>
+                  <div class="mt-6">
+                    <button id="create-workflow-card" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors">Unleash Content</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEATURES GRID (unchanged) -->
+        <div class="py-16 bg-white dark:bg-gray-900 theme-transition">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+              <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Powerful features</h2>
+              <p class="text-gray-600 dark:text-gray-300 mt-2">Everything you need to create consistent, high-impact content quickly.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <!-- feature cards retained -->
+              <article class="feature-card p-6 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-xl theme-transition">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-12 rounded-lg bg-purple-50 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-300 font-semibold">WF</div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Smart Workflow Builder</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Auto-generates a strategic 6–8 step workflow from your goal.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feature-card p-6 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-xl theme-transition">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-12 rounded-lg bg-green-50 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300 font-semibold">MF</div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Multi-format Generator</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Generate blog articles, social posts, video scripts and visuals from one prompt.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feature-card p-6 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-xl theme-transition">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold">AI</div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Audience Intelligence</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Tone, language adaptation and emotion targeting for better engagement.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feature-card p-6 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-xl theme-transition">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300 font-semibold">BM</div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Brand Memory</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Store brand voice, style and assets for consistent content across teams.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feature-card p-6 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-xl theme-transition">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-12 rounded-lg bg-orange-50 dark:bg-orange-900 flex items-center justify-center text-orange-600 dark:text-orange-300 font-semibold">LL</div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Advanced AI Models</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">High-quality text & visuals using modern stable/LLM models.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feature-card p-6 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-xl theme-transition">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-12 rounded-lg bg-pink-50 dark:bg-pink-900 flex items-center justify-center text-pink-600 dark:text-pink-300 font-semibold">EX</div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Export Center</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Download organized content bundles or export workflows for collaboration.</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="mt-12 text-center">
+              <button id="create-workflow-features" class="bg-purple-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-purple-700 transition-colors shadow-lg">Unleash Content</button>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Start from a template or describe your content goal and we'll build the steps.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA / Footer -->
+        <div class="py-16 bg-gray-50 dark:bg-gray-800 theme-transition">
+          <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Ready to Transform Your Content Creation?</h2>
+            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">Join thousands of creators who are already using AI to streamline their content workflows</p>
+            <button id="get-started-btn" class="bg-purple-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-purple-700 transition-colors shadow-lg">Get Started Free</button>
+          </div>
+        </div>
+
+        <footer class="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8 mt-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+            <div class="text-sm text-gray-600 dark:text-gray-300">&copy; 2025 ContentFlow Intelligence Studio. All rights reserved.</div>
+            <div class="flex gap-4 mt-4 md:mt-0 text-sm">
+              <a href="#" class="text-gray-600 dark:text-gray-300 hover:underline">Terms</a>
+              <a href="#" class="text-gray-600 dark:text-gray-300 hover:underline">Privacy</a>
+              <a href="#" class="text-gray-600 dark:text-gray-300 hover:underline">Contact</a>
+            </div>
+          </div>
+        </footer>
+      </section>
+
+      <!-- Dashboard / Builder / Results (kept intact) -->
+      <div id="dashboard" class="hidden py-8 bg-white dark:bg-gray-900 theme-transition min-h-full">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Content Studio Dashboard</h1>
+            <p class="text-gray-600 dark:text-gray-300">Manage your content workflows and projects</p>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <button id="new-workflow-btn" class="p-6 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors text-center theme-transition">
+              <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </div>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-1">New Workflow</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">Create a new content workflow</p>
+            </button>
+            <button id="audience-analysis-btn" class="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow text-center theme-transition">
+              <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              </div>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Audience Insights</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">Analyze target demographics</p>
+            </button>
+            <button id="brand-memory-btn" class="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow text-center theme-transition">
+              <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14m-14 0a2 2 0 002 2v2a2 2 0 01-2 2M5 9V7a2 2 0 012-2h10a2 2 0 012 2v2M5 9h14"></path></svg>
+              </div>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Brand Memory</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">Manage brand voice &amp; style</p>
+            </button>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 theme-transition">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Projects</h2>
+            </div>
+            <div id="projects-list" class="divide-y divide-gray-200 dark:divide-gray-700"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="workflow-builder" class="hidden py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Workflow Builder</h1>
+            <p class="text-gray-600">Describe your content goal and we'll create an intelligent workflow</p>
+          </div>
+
+          <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <label for="content-goal" class="block text-sm font-medium text-gray-700 mb-2">What content do you want to create?</label>
+            <textarea id="content-goal" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent textarea-light-purple placeholder-dark-blue" placeholder="Enter description"></textarea>
+            <div class="mt-4 flex justify-between items-center">
+              <div class="text-sm text-gray-500">Be specific about your target audience and content type</div>
+              <button id="generate-workflow-btn" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">Generate Workflow</button>
+            </div>
+          </div>
+
+          <div id="workflow-loading" class="hidden bg-white rounded-lg shadow p-8 text-center">
+            <div class="pulse-animation">
+              <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Generating Your Workflow</h3>
+            <p class="text-gray-600">AI is analyzing your goal and creating an optimized content workflow...</p>
+          </div>
+
+          <div id="generated-workflow" class="hidden">
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Your Content Workflow</h2>
+              <div id="workflow-steps" class="space-y-4"></div>
+
+              <div class="mt-6 flex justify-end space-x-4">
+                <button id="save-workflow-btn" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">Save Workflow</button>
+                <button id="execute-workflow-btn" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">Execute Workflow</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="results-page" class="hidden py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Generated Content</h1>
+            <p class="text-gray-600">Your multi-format content is ready</p>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Blog Article</h3>
+                <div id="blog-content" class="prose max-w-none text-sm text-gray-700"></div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Social Media Posts</h3>
+                <div id="social-posts" class="space-y-4"></div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Video Script</h3>
+                <div id="video-script" class="text-sm text-gray-700"></div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Generated Visuals</h3>
+                <div id="generated-images" class="grid grid-cols-2 gap-4"></div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Audience Insights</h3>
+                <div id="audience-insights" class="space-y-3"></div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Export Options</h3>
+                <div class="space-y-3">
+                  <button id="export-text-btn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Export All Text (.zip)</button>
+                  <button id="export-images-btn" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">Export Images (.zip)</button>
+                  <button id="export-workflow-btn" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">Export Workflow (JSON)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    /* ===========================
+       Application Logic (merged + defensive)
+       Sign-in UI removed; Create Workflow always opens the builder.
+       =========================== */
+
+    const defaultConfig = {
+      app_title: "ContentFlow Intelligence Studio",
+      hero_tagline: "AI-powered content workflow automation",
+      cta_button: "Generate Your First Content Workflow"
+    };
+
+    let currentWorkflow = null;
+    let projects = [];
+
+    const workflowTemplates = {
+      "ad campaign": [
+        { id: 1, title: "Audience Analysis", description: "Identify target demographics and psychographics", status: "pending" },
+        { id: 2, title: "Key Messaging", description: "Extract core value propositions and benefits", status: "pending" },
+        { id: 3, title: "Tone Selection", description: "Determine optimal communication style", status: "pending" },
+        { id: 4, title: "Content Generation", description: "Create multi-format content assets", status: "pending" },
+        { id: 5, title: "Visual Assets", description: "Generate supporting imagery and graphics", status: "pending" },
+        { id: 6, title: "Optimization", description: "Refine content for maximum impact", status: "pending" },
+        { id: 7, title: "Final Packaging", description: "Prepare deliverables for deployment", status: "pending" }
+      ],
+      "blog post": [
+        { id: 1, title: "Topic Research", description: "Analyze trending keywords and competitor content", status: "pending" },
+        { id: 2, title: "Outline Creation", description: "Structure article with compelling headings", status: "pending" },
+        { id: 3, title: "Content Writing", description: "Generate engaging, SEO-optimized content", status: "pending" },
+        { id: 4, title: "Social Adaptation", description: "Create social media promotional posts", status: "pending" },
+        { id: 5, title: "Visual Support", description: "Generate featured images and infographics", status: "pending" }
+      ],
+      "social media": [
+        { id: 1, title: "Platform Analysis", description: "Optimize content for each social platform", status: "pending" },
+        { id: 2, title: "Hashtag Research", description: "Identify trending and relevant hashtags", status: "pending" },
+        { id: 3, title: "Content Creation", description: "Generate platform-specific posts", status: "pending" },
+        { id: 4, title: "Visual Design", description: "Create eye-catching social graphics", status: "pending" },
+        { id: 5, title: "Scheduling Strategy", description: "Optimize posting times and frequency", status: "pending" }
+      ]
+    };
+
+    const contentTemplates = {
+      blog: `# The Future of Clean Water: A Call to Action
+
+Access to clean drinking water is not just a basic human right—it's the foundation of healthy communities and sustainable development. In our rapidly urbanizing world, young professionals are uniquely positioned to drive meaningful change in water accessibility and quality.
+
+## The Current Challenge
+
+Despite technological advances, over 2 billion people worldwide lack access to safely managed drinking water at home. Urban areas, where many young professionals live and work, face increasing pressure on water infrastructure due to population growth and climate change.
+
+## Why Young Professionals Matter
+
+As digital natives and change-makers, young professionals have the tools, networks, and influence to create lasting impact. Through conscious consumption, advocacy, and supporting water-focused initiatives, this demographic can lead the transformation toward universal water access.
+
+## Taking Action
+
+1. **Support Water-Focused Organizations**: Partner with NGOs working on water accessibility projects
+2. **Advocate for Policy Change**: Use your voice to support water infrastructure investments
+3. **Conscious Consumption**: Choose brands committed to water stewardship
+4. **Community Engagement**: Organize local water conservation initiatives
+
+The time for action is now. Clean water is not a luxury—it's a necessity that requires our collective commitment and innovation.`,
+      social: [
+        "💧 Clean water = healthy communities. As young professionals, we have the power to drive change. Support water accessibility initiatives in your city today! #CleanWater #SocialImpact #YoungProfessionals",
+        "🌍 2 billion people lack access to clean water at home. That's unacceptable. Let's use our networks and influence to make a difference. What water initiative will you support this month? #WaterForAll #Sustainability",
+        "🚰 Your daily choices matter. From the brands you support to the policies you advocate for, young professionals are shaping the future of water accessibility. Be part of the solution! #CleanWaterAdvocate #Changemakers"
+      ],
+      script: `[FADE IN: Urban skyline at sunrise]
+
+NARRATOR (V.O.): Every morning, millions of young professionals start their day with a simple act—turning on the tap.
+
+[CUT TO: Close-up of water flowing from a modern faucet]
+
+NARRATOR (V.O.): But for 2 billion people worldwide, this simple act remains a distant dream.
+
+[MONTAGE: Young professionals in various urban settings - coffee shops, offices, co-working spaces]
+
+NARRATOR (V.O.): As the generation that will inherit tomorrow's challenges, young professionals have a unique opportunity—and responsibility—to ensure clean water access for all.
+
+[CUT TO: Split screen showing water scarcity vs. abundance]
+
+NARRATOR (V.O.): Through conscious choices, advocacy, and innovation, we can turn the tide on the global water crisis.
+
+[FINAL SHOT: Group of diverse young professionals working together]
+
+NARRATOR (V.O.): Clean water. It's not just a right—it's our shared future. Join the movement today.
+
+[FADE TO LOGO: Clean Water Initiative]`
+    };
+
+    // Utilities
+    function showInlineMessage(message, type='info') {
+      const toast = document.createElement('div');
+      toast.setAttribute('role','status'); toast.setAttribute('aria-live','polite');
+      toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${type==='success'?'bg-green-500 text-white':type==='error'?'bg-red-500 text-white':'bg-blue-500 text-white'}`;
+      toast.textContent = message; document.body.appendChild(toast);
+      setTimeout(()=> toast.remove(), 3000);
+    }
+    function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // Theme utilities (keeps functionality from earlier)
+    function updateThemeIcons(){
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('sun-icon')?.classList.toggle('hidden', !isDark);
+      document.getElementById('moon-icon')?.classList.toggle('hidden', isDark);
+      document.getElementById('theme-toggle')?.setAttribute('aria-pressed', String(isDark));
+    }
+    function initTheme() {
+      const saved = localStorage.getItem('theme') || null;
+      if (saved) document.documentElement.classList.toggle('dark', saved === 'dark');
+      updateThemeIcons();
+    }
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    // Navigation helper
+    function showPage(pageId) {
+      const pages = ['landing-page','dashboard','workflow-builder','results-page'];
+      pages.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
+      const target = document.getElementById(pageId);
+      if (target) target.classList.remove('hidden');
+    }
+
+    // Workflow rendering
+    function renderWorkflow(workflow) {
+      const container = document.getElementById('workflow-steps');
+      if(!container) return;
+      container.innerHTML = '';
+      workflow.steps.forEach((step, index) => {
+        const stepElement = document.createElement('div');
+        stepElement.className = 'workflow-step bg-gray-50 rounded-lg p-4 border-l-4 border-purple-400';
+        stepElement.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">${index+1}</div>
+              <div>
+                <h4 class="font-semibold text-gray-900">${escapeHtml(step.title)}</h4>
+                <p class="text-sm text-gray-600">${escapeHtml(step.description)}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-1 text-xs rounded-full ${step.status==='completed'?'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800'}">${step.status}</span>
+              <button class="text-gray-400 hover:text-gray-600" data-step-toggle="${step.id}" aria-label="Toggle step ${index+1}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+            </div>
+          </div>`;
+        container.appendChild(stepElement);
+      });
+    }
+
+    function toggleStep(stepId){ console.log('Toggle step:', stepId); showInlineMessage('Toggled step '+stepId, 'info'); }
+
+    function detectWorkflowType(goal) {
+      const g = (goal || '').toLowerCase();
+      if (g.includes('blog') || g.includes('article')) return 'blog post';
+      if (g.includes('social') || g.includes('instagram') || g.includes('twitter')) return 'social media';
+      return 'ad campaign';
+    }
+
+    function generateWorkflow() {
+      const goalEl = document.getElementById('content-goal');
+      const goal = goalEl ? goalEl.value.trim() : '';
+      if (!goal) { showInlineMessage('Please describe your content goal first.', 'error'); return; }
+      document.getElementById('workflow-loading')?.classList.remove('hidden');
+      document.getElementById('generated-workflow')?.classList.add('hidden');
+      setTimeout(()=>{
+        const type = detectWorkflowType(goal);
+        const steps = workflowTemplates[type] || workflowTemplates['ad campaign'];
+        currentWorkflow = { id: 'workflow_'+Date.now(), goal, steps, createdAt: new Date().toISOString() };
+        renderWorkflow(currentWorkflow);
+        document.getElementById('workflow-loading')?.classList.add('hidden');
+        document.getElementById('generated-workflow')?.classList.remove('hidden');
+      }, 800);
+    }
+
+    function generateContent() {
+      document.getElementById('blog-content').innerHTML = contentTemplates.blog.replace(/\n\s+/g,'<br><br>');
+      const socialContainer = document.getElementById('social-posts'); socialContainer.innerHTML = '';
+      contentTemplates.social.forEach((post, idx)=>{
+        const postEl = document.createElement('div'); postEl.className='p-4 bg-gray-50 rounded-lg';
+        postEl.innerHTML = `<div class="flex items-start space-x-3"><div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">${idx+1}</div><p class="text-sm text-gray-700 flex-1">${escapeHtml(post)}</p></div>`;
+        socialContainer.appendChild(postEl);
+      });
+      document.getElementById('video-script').innerHTML = contentTemplates.script.replace(/\n\s+/g,'<br><br>');
+      const imagesContainer = document.getElementById('generated-images'); imagesContainer.innerHTML = '';
+      for(let i=0;i<4;i++){ const img=document.createElement('div'); img.className='aspect-square bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold'; img.textContent=`Visual ${i+1}`; imagesContainer.appendChild(img); }
+      document.getElementById('audience-insights').innerHTML = `
+        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Primary Demographic:</span><span class="text-sm font-semibold">Urban Professionals 25-35</span></div>
+        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Recommended Tone:</span><span class="text-sm font-semibold">Professional & Inspiring</span></div>
+        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Reading Level:</span><span class="text-sm font-semibold">College Graduate</span></div>
+        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Key Emotions:</span><span class="text-sm font-semibold">Urgency, Hope, Empowerment</span></div>`;
+    }
+
+    function exportText() {
+      const payload = { blog: contentTemplates.blog, social: contentTemplates.social, script: contentTemplates.script };
+      const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='content-export.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showInlineMessage('Text content exported successfully!', 'success');
+    }
+    function exportImages(){ showInlineMessage('Image export coming soon!', 'info'); }
+    function exportWorkflow(){ if(!currentWorkflow){ showInlineMessage('No workflow to export','error'); return; } const blob=new Blob([JSON.stringify(currentWorkflow,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='workflow-export.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showInlineMessage('Workflow exported successfully!','success'); }
+
+    function renderProjectsList() {
+      const container = document.getElementById('projects-list'); if(!container) return;
+      if (projects.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-500 dark:text-gray-400"><svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>No projects yet. Create your first workflow to get started!</p></div>`; return; }
+      container.innerHTML=''; projects.forEach(project=>{ const el=document.createElement('div'); el.className='px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer theme-transition'; el.innerHTML = `<div class="flex items-center justify-between"><div><h3 class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(project.goal||project.id)}</h3><p class="text-sm text-gray-500 dark:text-gray-400">Created ${new Date(project.createdAt).toLocaleDateString()}</p></div><div class="flex items-center space-x-2"><span class="px-2 py-1 text-xs rounded-full ${project.status === 'completed' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'}">${project.status}</span></div></div>`; container.appendChild(el); });
+    }
+
+    // Open builder (no sign-in gating)
+    function openWorkflowBuilder() {
+      showPage('workflow-builder');
+      // focus first input for convenience
+      setTimeout(()=> document.getElementById('content-goal')?.focus(), 120);
+      const cg = document.getElementById('content-goal');
+      if (cg) cg.classList.add('placeholder-dark-blue');
+    }
+
+    // Event wiring
+    function setupEventListeners() {
+      // Wire all create-workflow CTAs to openWorkflowBuilder
+      ['create-workflow-hero','create-workflow-card','create-workflow-features','get-started-btn','new-workflow-btn'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) {
+          const clone = el.cloneNode(true);
+          el.parentNode.replaceChild(clone, el);
+          clone.addEventListener('click', (e)=>{ e.preventDefault(); openWorkflowBuilder(); });
+        }
+      });
+
+      document.getElementById('audience-analysis-btn')?.addEventListener('click', ()=> showInlineMessage('Audience analysis feature coming soon!', 'info'));
+      document.getElementById('brand-memory-btn')?.addEventListener('click', ()=> showInlineMessage('Brand memory feature coming soon!', 'info'));
+
+      document.getElementById('generate-workflow-btn')?.addEventListener('click', generateWorkflow);
+      document.getElementById('save-workflow-btn')?.addEventListener('click', ()=>{
+        // simple local save for demo
+        if (!currentWorkflow) { showInlineMessage('No workflow to save', 'info'); return; }
+        projects.unshift({...currentWorkflow, status:'saved'});
+        renderProjectsList();
+        showInlineMessage('Workflow saved locally.', 'success');
+      });
+      document.getElementById('execute-workflow-btn')?.addEventListener('click', ()=>{
+        if (!currentWorkflow) { showInlineMessage('No workflow generated yet.', 'info'); return; }
+        showInlineMessage('Executing workflow...', 'info');
+        setTimeout(()=>{ generateContent(); showPage('results-page'); }, 800);
+      });
+
+      document.getElementById('export-text-btn')?.addEventListener('click', exportText);
+      document.getElementById('export-images-btn')?.addEventListener('click', exportImages);
+      document.getElementById('export-workflow-btn')?.addEventListener('click', exportWorkflow);
+
+      document.addEventListener('click', (e)=>{
+        const btn = e.target.closest('[data-step-toggle]');
+        if (btn) { const stepId = btn.getAttribute('data-step-toggle'); toggleStep(stepId); }
+      });
+    }
+
+    // Init app (defensive around SDKs)
+    async function initApp() {
+      initTheme();
+      setupEventListeners();
+
+      try {
+        if (window.dataSdk && typeof window.dataSdk.init === 'function') {
+          const dataHandler = { onDataChanged(data){ projects = data || []; renderProjectsList(); } };
+          const initResult = await window.dataSdk.init(dataHandler);
+          if (initResult && Array.isArray(initResult.initialData)) { projects = initResult.initialData; renderProjectsList(); }
+        } else {
+          console.info('dataSdk not available — demo mode.');
+        }
+      } catch(e) { console.error('dataSdk init error', e); }
+
+      try {
+        if (window.elementSdk && typeof window.elementSdk.init === 'function') {
+          await window.elementSdk.init({
+            defaultConfig,
+            onConfigChange: async (config) => {
+              document.getElementById('app-title') && (document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title);
+              document.getElementById('hero-tagline') && (document.getElementById('hero-tagline').textContent = config.hero_tagline || defaultConfig.hero_tagline);
+            }
+          });
+        } else {
+          console.info('elementSdk not available — skipping editor integration.');
+        }
+      } catch(e) { console.error('elementSdk init error', e); }
+
+      showPage('landing-page');
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+
+  <!-- Robust theme script to respect system and user preference (no flash) -->
+  <script>
+    (function(){
+      const KEY = 'theme';
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+        document.getElementById('sun-icon')?.classList.toggle('hidden', !isDark);
+        document.getElementById('moon-icon')?.classList.toggle('hidden', isDark);
+        document.getElementById('theme-toggle')?.setAttribute('aria-pressed', String(isDark));
+      }
+
+      function getUserPref() { const v = localStorage.getItem(KEY); return v === 'dark' || v === 'light' ? v : null; }
+      function setUserPref(v) { if (!v) localStorage.removeItem(KEY); else localStorage.setItem(KEY, v); }
+      function getSystemPref() { return mediaQuery.matches ? 'dark' : 'light'; }
+      function systemChanged(e) { if (getUserPref()) return; applyTheme(e.matches ? 'dark' : 'light'); }
+
+      function init() {
+        const user = getUserPref();
+        applyTheme(user || getSystemPref());
+        if (!user) {
+          if (mediaQuery.addEventListener) mediaQuery.addEventListener('change', systemChanged);
+          else mediaQuery.addListener(systemChanged);
+        }
+      }
+
+      function toggle() {
+        const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        setUserPref(next);
+        applyTheme(next);
+      }
+
+      document.addEventListener('DOMContentLoaded', ()=>{
+        init();
+      });
+    })();
+  </script>
+</body>
+</html>
