@@ -66,14 +66,26 @@ Dev Tools
 ⸻
 
 Project Structure
+
 /
+
 ├─ index.html
+
 ├─ README.md
+
 ├─ assets/
+
 │  ├─ screenshots/
-│  │  ├─ landing.png
-│  │  ├─ builder.png
-│  │  └─ results.png
+
+│  │  ├─ landingpage1.png
+
+│  │  ├─ landingpage2.png
+
+│  │  ├─ builderpage.png
+
+│  │  ├─ resultpage1.png
+
+│  │  └─ resultpage2.png
 └─ README.md
 
 Quickstart (Local)
