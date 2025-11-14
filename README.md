@@ -1,9 +1,11 @@
 # kodekalesh-2025
 ContentFlow Intelligence Studio
+Team CoDeVerse
+Gaurang Srivastava 1st BTech CSE
+Aviral Agarwal 1st BTech CSE
+Satvik Yadav 1st BTech CSE
 
 AI-powered workflow automation for high-volume, multi-format content production.
-
-⸻
 
 Overview
 
