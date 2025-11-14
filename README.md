@@ -83,16 +83,6 @@ Open http://localhost:5500
 	•	Using VS Code Live Server:
 	•	Open the project folder in VS Code and choose Open with Live Server for index.html.
 
-3.	Optional: Connect AI/APIs
-
-If you plan to wire up real models, create a configuration file or environment file and provide keys to your integration layer:
-  OPENAI_API_KEY=your_openai_key
-  STABILITY_API_KEY=your_stability_key
-  Development Notes
-	•	Tailwind is loaded via CDN for rapid iteration. For production, integrate Tailwind via PostCSS or the Tailwind CLI according to the Tailwind documentation.
-	•	The application includes defensive checks when optional SDKs are not present so it runs in demo mode without external services.
-	•	Placeholder visuals are used in the UI; swap these with real generated assets when connected to an image-generation service.
-
 ⸻
 
 Usage
